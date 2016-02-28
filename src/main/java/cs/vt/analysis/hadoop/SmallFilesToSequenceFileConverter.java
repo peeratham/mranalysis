@@ -29,9 +29,9 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 
 
 	static class SequenceFileMapper extends
-			Mapper<NullWritable, BytesWritable, Text, Text> {
+			Mapper<NullWritable, BytesWritable, NullWritable, Text> {
 		private Text filenameKey;
-		private MultipleOutputs<Text, Text> multipleOutputs;
+		private MultipleOutputs<NullWritable, Text> multipleOutputs;
 		
 
 		@Override
@@ -50,7 +50,7 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 			JSONObject report = blockAnalyzer.analyze(new String(value.copyBytes()));
 			Text result = new Text(report.toJSONString());
 			Text id = new Text(blockAnalyzer.getProjectID() + "");
-			multipleOutputs.write(id, result, id.toString());
+			multipleOutputs.write(NullWritable.get(), result, id.toString());
 		}
 		
 		@Override
@@ -83,7 +83,7 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 		job.setMapperClass(SequenceFileMapper.class);
 		job.setNumReduceTasks(0);
 
-		job.setOutputKeyClass(Text.class);
+		job.setOutputKeyClass(NullWritable.class);
 		job.setOutputValueClass(Text.class);
 		
 		
