@@ -7,11 +7,14 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
@@ -25,33 +28,32 @@ import org.json.simple.JSONObject;
 import cs.vt.analysis.analyzer.AnalysisManager;
 import cs.vt.analysis.analyzer.analysis.AnalysisException;
 import cs.vt.analysis.analyzer.parser.ParsingException;
-
-
+import cs.vt.analysis.hadoop.WordCount.Reduce;
 
 public class SmallFilesToSequenceFileConverter extends Configured implements
 		Tool {
 
-
-
 	static class SequenceFileMapper extends
 			Mapper<FileLineWritable, Text, Text, Text> {
 		private Text filenameKey;
-		private MultipleOutputs<NullWritable, Text> multipleOutputs;
-		
+//		private MultipleOutputs<NullWritable, Text> multipleOutputs;
 
 		@Override
 		protected void setup(Context context) throws IOException,
 				InterruptedException {
-//			InputSplit split = context.getInputSplit();
-//			Path path = ((FileSplit) split).getPath();
-//			filenameKey = new Text(path.toString());
-			multipleOutputs = new MultipleOutputs(context);
+//			multipleOutputs = new MultipleOutputs(context);
 		}
 
 		@Override
-		protected void map(FileLineWritable key, Text value,
-				Context context) throws IOException, InterruptedException {
-			
+		protected void cleanup(Context context) throws IOException,
+				InterruptedException {
+//			multipleOutputs.close();
+		}
+
+		@Override
+		protected void map(FileLineWritable key, Text value, Context context)
+				throws IOException, InterruptedException {
+
 			AnalysisManager blockAnalyzer = new AnalysisManager();
 			JSONObject report = new JSONObject();
 			try {
@@ -65,15 +67,24 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 			}
 			Text result = new Text(report.toJSONString());
 			Text id = new Text(blockAnalyzer.getProjectID() + "");
-			multipleOutputs.write(NullWritable.get(), result, id.toString());
+			context.write(id, result);
+//			multipleOutputs.write(NullWritable.get(), result, id.toString());
+		}
+	}
+	
+	public static class MultiFileReducer extends Reducer<Text, Text, Text, Text> {
+
+		@Override
+		public void reduce(Text key, Iterable<Text> values,
+				Context context) throws IOException, InterruptedException {
+			String result = "";
+			for (Text val: values) {
+				result = val.toString();	//there is one val
+			}
+			context.write(key, new Text(result));
 		}
 		
-		@Override
-		protected void cleanup(Context context) throws IOException,
-				InterruptedException {
-			multipleOutputs.close();
-		}
-
+		
 	}
 
 	@Override
@@ -84,7 +95,6 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 
 		Configuration conf = getConf();
 		Job job = new Job(conf, this.getClass().toString());
-		
 
 		FileInputFormat.setInputPaths(job, inputPath);
 		FileOutputFormat.setOutputPath(job, outputPath);
@@ -92,17 +102,19 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 		job.setJobName("SmallFilesToSequenceFileConverter");
 		job.setJarByClass(SmallFilesToSequenceFileConverter.class);
 
-//		job.setInputFormatClass(WholeFileInputFormat.class);
+		// job.setInputFormatClass(WholeFileInputFormat.class);
 		job.setInputFormatClass(CFInputFormat.class);
-		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class); //prevent part-m-xxx being created
-		
-		job.setMapperClass(SequenceFileMapper.class);
-		job.setNumReduceTasks(0);
+		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class); // prevent
+																			// part-m-xxx
+																			// being
+																			// created
 
-		job.setOutputKeyClass(NullWritable.class);
+		job.setMapperClass(SequenceFileMapper.class);
+		job.setReducerClass(MultiFileReducer.class);
+//		job.setNumReduceTasks(0);
+
+		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(Text.class);
-		
-		
 
 		return job.waitForCompletion(true) ? 0 : 1;
 	}

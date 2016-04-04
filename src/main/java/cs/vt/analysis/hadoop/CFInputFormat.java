@@ -12,6 +12,8 @@ import org.apache.hadoop.mapreduce.lib.input.CombineFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileRecordReader;
 import org.apache.hadoop.mapreduce.lib.input.CombineFileSplit;
 
+//credit: Felix Ren-Chyan Chern
+//http://www.idryman.org/blog/2013/09/22/process-small-files-on-hadoop-using-combinefileinputformat-1/
 
 
 public class CFInputFormat extends CombineFileInputFormat<FileLineWritable, Text> {
