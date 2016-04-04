@@ -21,7 +21,11 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.json.simple.JSONObject;
 
-import cs.vt.analysis.analyzer.BlockAnalyzer;
+import cs.vt.analysis.analyzer.AnalysisManager;
+import cs.vt.analysis.analyzer.analysis.AnalysisException;
+import cs.vt.analysis.analyzer.parser.ParsingException;
+
+
 
 public class SmallFilesToSequenceFileConverter extends Configured implements
 		Tool {
@@ -46,8 +50,17 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 		@Override
 		protected void map(NullWritable key, BytesWritable value,
 				Context context) throws IOException, InterruptedException {
-			BlockAnalyzer blockAnalyzer = new BlockAnalyzer();
-			JSONObject report = blockAnalyzer.analyze(new String(value.copyBytes()));
+			AnalysisManager blockAnalyzer = new AnalysisManager();
+			JSONObject report = null;
+			try {
+				report = blockAnalyzer.analyze(new String(value.copyBytes()));
+			} catch (ParsingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (AnalysisException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			Text result = new Text(report.toJSONString());
 			Text id = new Text(blockAnalyzer.getProjectID() + "");
 			multipleOutputs.write(NullWritable.get(), result, id.toString());
