@@ -1,6 +1,7 @@
 package cs.vt.analysis.hadoop;
 
 import java.io.IOException;
+import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -33,7 +34,7 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 
 
 	static class SequenceFileMapper extends
-			Mapper<NullWritable, BytesWritable, NullWritable, Text> {
+			Mapper<FileLineWritable, Text, Text, Text> {
 		private Text filenameKey;
 		private MultipleOutputs<NullWritable, Text> multipleOutputs;
 		
@@ -41,19 +42,20 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 		@Override
 		protected void setup(Context context) throws IOException,
 				InterruptedException {
-			InputSplit split = context.getInputSplit();
-			Path path = ((FileSplit) split).getPath();
-			filenameKey = new Text(path.toString());
+//			InputSplit split = context.getInputSplit();
+//			Path path = ((FileSplit) split).getPath();
+//			filenameKey = new Text(path.toString());
 			multipleOutputs = new MultipleOutputs(context);
 		}
 
 		@Override
-		protected void map(NullWritable key, BytesWritable value,
+		protected void map(FileLineWritable key, Text value,
 				Context context) throws IOException, InterruptedException {
+			
 			AnalysisManager blockAnalyzer = new AnalysisManager();
-			JSONObject report = null;
+			JSONObject report = new JSONObject();
 			try {
-				report = blockAnalyzer.analyze(new String(value.copyBytes()));
+				report = blockAnalyzer.analyze(value.toString());
 			} catch (ParsingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -90,7 +92,8 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 		job.setJobName("SmallFilesToSequenceFileConverter");
 		job.setJarByClass(SmallFilesToSequenceFileConverter.class);
 
-		job.setInputFormatClass(WholeFileInputFormat.class);
+//		job.setInputFormatClass(WholeFileInputFormat.class);
+		job.setInputFormatClass(CFInputFormat.class);
 		LazyOutputFormat.setOutputFormatClass(job, TextOutputFormat.class); //prevent part-m-xxx being created
 		
 		job.setMapperClass(SequenceFileMapper.class);
