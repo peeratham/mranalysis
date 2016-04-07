@@ -96,6 +96,7 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 		Configuration conf = getConf();
 		Job job = new Job(conf, this.getClass().toString());
 
+		FileInputFormat.setInputDirRecursive(job, true);
 		FileInputFormat.setInputPaths(job, inputPath);
 		FileOutputFormat.setOutputPath(job, outputPath);
 
