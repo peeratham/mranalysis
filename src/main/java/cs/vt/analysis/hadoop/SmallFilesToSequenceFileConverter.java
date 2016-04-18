@@ -55,9 +55,14 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 				throws IOException, InterruptedException {
 
 			AnalysisManager blockAnalyzer = new AnalysisManager();
-			JSONObject report = new JSONObject();
+			JSONObject report = null;
 			try {
 				report = blockAnalyzer.analyze(value.toString());
+				Text result = new Text(report.toJSONString());
+				Text id = new Text(blockAnalyzer.getProjectID() + "");
+				if(id!=null & report!=null){
+					context.write(id, result);
+				}
 			} catch (ParsingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -65,9 +70,7 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			Text result = new Text(report.toJSONString());
-			Text id = new Text(blockAnalyzer.getProjectID() + "");
-			context.write(id, result);
+
 //			multipleOutputs.write(NullWritable.get(), result, id.toString());
 		}
 	}
