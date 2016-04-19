@@ -58,11 +58,12 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 			JSONObject report = null;
 			try {
 				report = blockAnalyzer.analyze(value.toString());
-				Text result = new Text(report.toJSONString());
-				Text id = new Text(blockAnalyzer.getProjectID() + "");
-				if(id!=null || report!=null){
+				if(report != null && blockAnalyzer.getProjectID()>0){
+					Text result = new Text(report.toJSONString());
+					Text id = new Text(blockAnalyzer.getProjectID() + "");
 					context.write(id, result);
 				}
+				
 			} catch (ParsingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
