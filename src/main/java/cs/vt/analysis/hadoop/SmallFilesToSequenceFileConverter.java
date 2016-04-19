@@ -55,9 +55,8 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 				throws IOException, InterruptedException {
 
 			AnalysisManager blockAnalyzer = new AnalysisManager();
-			JSONObject report = null;
 			try {
-				report = blockAnalyzer.analyze(value.toString());
+				JSONObject report = blockAnalyzer.analyze(value.toString());
 				if(report != null && blockAnalyzer.getProjectID()>0){
 					Text result = new Text(report.toJSONString());
 					Text id = new Text(blockAnalyzer.getProjectID() + "");
