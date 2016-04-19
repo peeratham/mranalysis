@@ -60,7 +60,7 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 				report = blockAnalyzer.analyze(value.toString());
 				Text result = new Text(report.toJSONString());
 				Text id = new Text(blockAnalyzer.getProjectID() + "");
-				if(id!=null & report!=null){
+				if(id!=null && report!=null){
 					context.write(id, result);
 				}
 			} catch (ParsingException e) {
