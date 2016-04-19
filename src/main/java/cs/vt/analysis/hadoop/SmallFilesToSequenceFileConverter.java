@@ -69,6 +69,8 @@ public class SmallFilesToSequenceFileConverter extends Configured implements
 			} catch (AnalysisException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 
 //			multipleOutputs.write(NullWritable.get(), result, id.toString());
